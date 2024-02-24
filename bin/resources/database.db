@@ -1,0 +1,13 @@
+CREATE TABLE Rol (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nombre TEXT NOT NULL
+);
+
+CREATE TABLE Persona (
+    correo TEXT PRIMARY KEY,
+    nombre TEXT NOT NULL,
+    telefono TEXT,
+    fechaNacimiento DATE,
+    rol_id INTEGER,
+    FOREIGN KEY (rol_id) REFERENCES Rol(id)
+);
