@@ -9,41 +9,52 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * Implementación de la interfaz PersonaDAO que proporciona métodos para
+ * interactuar con la tabla 'persona' en la base de datos.
+ */
 public class PersonaDAOImpl implements PersonaDAO {
 
     private ConnectionDB connectionDB = ConnectionDB.getInstance();
     private static final Logger logger = Logger.getLogger(PersonaDAOImpl.class.getName());
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void crearPersona(Persona persona) {
-        String query = "INSERT INTO personas(nombre, telefono, fechaNacimiento, correo, rol) VALUES (?, ?, ?, ?, ?)";
+        String query = "INSERT INTO persona(nombre, telefono, fechaNacimiento, correo, rol) VALUES (?, ?, ?, ?, ?)";
         try (Connection conn = connectionDB.getConnection();
                 PreparedStatement pStatement = conn.prepareStatement(query)) {
             pStatement.setString(1, persona.getNombre());
             pStatement.setString(2, persona.getTelefono());
-            pStatement.setDate(3, convertToSql(persona.getFechaNacimiento()));
+            pStatement.setString(3, persona.getFechaNacimiento());
             pStatement.setString(4, persona.getCorreo());
-            pStatement.setString(5, persona.getRol().getNombre());
+            pStatement.setInt(5, persona.getRol());
+            pStatement.executeUpdate();
+            logger.log(Level.INFO, "Persona creada: " + persona.toString());
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Error create persona", e);
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<Persona> obtenerPersonas() {
         List<Persona> personas = new ArrayList<>();
-        String query = "SELECT * FROM personas";
+        String query = "SELECT * FROM persona";
         try (Connection conn = connectionDB.getConnection();
                 PreparedStatement pStatement = conn.prepareStatement(query);
                 ResultSet rs = pStatement.executeQuery(query)) {
             while (rs.next()) {
                 String nombre = rs.getString("nombre");
                 String telefono = rs.getString("telefono");
-                java.sql.Date fechaNacimiento = rs.getDate("fechaNacimiento");
+                String fechaNacimiento = rs.getString("fechaNacimiento");
                 String correo = rs.getString("correo");
-                String rol = rs.getString("rol");
-                Rol rolPersona = new Rol(rol, rol);
-                personas.add(new Persona(nombre, telefono, convertToUtil(fechaNacimiento), correo, rolPersona));
+                Integer rol = rs.getInt("rol");
+                personas.add(new Persona(nombre, telefono, fechaNacimiento, correo, rol));
             }
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Error getAll personas", e);
@@ -51,10 +62,13 @@ public class PersonaDAOImpl implements PersonaDAO {
         return personas;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Persona obtenerPersona(String correo) {
         Persona persona = null;
-        String query = "SELECT * FROM personas WHERE correo = ?";
+        String query = "SELECT * FROM persona WHERE correo = ?";
         try (Connection conn = connectionDB.getConnection();
                 PreparedStatement pStatement = conn.prepareStatement(query)) {
             pStatement.setString(1, correo);
@@ -62,11 +76,10 @@ public class PersonaDAOImpl implements PersonaDAO {
             if (rs.next()) {
                 String nombre = rs.getString("nombre");
                 String telefono = rs.getString("telefono");
-                java.sql.Date fechaNacimiento = rs.getDate("fechaNacimiento");
+                String fechaNacimiento = rs.getString("fechaNacimiento");
                 String correoOut = rs.getString("correo");
-                String rol = rs.getString("rol");
-                Rol rolPersona = new Rol(rol, rol);
-                persona = new Persona(nombre, telefono, convertToUtil(fechaNacimiento), correoOut, rolPersona);
+                Integer rol = rs.getInt("rol");
+                persona = new Persona(nombre, telefono, fechaNacimiento, correoOut, rol);
             }
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Error get persona", e);
@@ -74,25 +87,31 @@ public class PersonaDAOImpl implements PersonaDAO {
         return persona;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void actualizarPersona(Persona persona) {
-        String query = "UPDATE personas SET nombre = ?, telefono = ?, fechaNacimiento = ?, correo = ?, rol = ? WHERE correo = ?";
+        String query = "UPDATE persona SET nombre = ?, telefono = ?, fechaNacimiento = ?, correo = ?, rol = ? WHERE correo = ?";
         try (Connection conn = connectionDB.getConnection();
                 PreparedStatement pStatement = conn.prepareStatement(query)) {
             pStatement.setString(1, persona.getNombre());
             pStatement.setString(2, persona.getTelefono());
-            pStatement.setDate(3, convertToSql(persona.getFechaNacimiento()));
+            pStatement.setString(3, persona.getFechaNacimiento());
             pStatement.setString(4, persona.getCorreo());
-            pStatement.setString(5, persona.getRol().getNombre());
+            pStatement.setInt(5, persona.getRol());
             pStatement.executeUpdate();
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Error update persona", e);
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void eliminarPersona(String correo) {
-        String query = "DELETE FROM personas WHERE correo = ?";
+        String query = "DELETE FROM persona WHERE correo = ?";
         try (Connection conn = connectionDB.getConnection();
                 PreparedStatement pStatement = conn.prepareStatement(query)) {
             pStatement.setString(1, correo);
@@ -100,13 +119,5 @@ public class PersonaDAOImpl implements PersonaDAO {
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Error delete persona", e);
         }
-    }
-
-    private java.sql.Date convertToSql(java.util.Date useUtilDatePackage) {
-        return new java.sql.Date(useUtilDatePackage.getTime());
-    }
-
-    public static java.util.Date convertToUtil(java.sql.Date sqlDate) {
-        return new java.util.Date(sqlDate.getTime());
     }
 }
