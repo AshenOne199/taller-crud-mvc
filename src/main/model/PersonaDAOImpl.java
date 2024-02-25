@@ -34,7 +34,7 @@ public class PersonaDAOImpl implements PersonaDAO {
             pStatement.executeUpdate();
             logger.log(Level.INFO, "Persona creada: " + persona.toString());
         } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Error create persona", e);
+            logger.log(Level.SEVERE, "Error creando persona");
         }
     }
 
@@ -46,8 +46,8 @@ public class PersonaDAOImpl implements PersonaDAO {
         List<Persona> personas = new ArrayList<>();
         String query = "SELECT * FROM persona";
         try (Connection conn = connectionDB.getConnection();
-                PreparedStatement pStatement = conn.prepareStatement(query);
-                ResultSet rs = pStatement.executeQuery(query)) {
+                PreparedStatement pStatement = conn.prepareStatement(query);) {
+            ResultSet rs = pStatement.executeQuery();
             while (rs.next()) {
                 String nombre = rs.getString("nombre");
                 String telefono = rs.getString("telefono");
@@ -56,8 +56,10 @@ public class PersonaDAOImpl implements PersonaDAO {
                 Integer rol = rs.getInt("rol");
                 personas.add(new Persona(nombre, telefono, fechaNacimiento, correo, rol));
             }
+            rs.close();
+            logger.log(Level.INFO, "Personas encontradas correctamente");
         } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Error getAll personas", e);
+            logger.log(Level.SEVERE, "Error obteniendo personas");
         }
         return personas;
     }
@@ -80,9 +82,11 @@ public class PersonaDAOImpl implements PersonaDAO {
                 String correoOut = rs.getString("correo");
                 Integer rol = rs.getInt("rol");
                 persona = new Persona(nombre, telefono, fechaNacimiento, correoOut, rol);
+                logger.log(Level.INFO, "Persona encontrada correctamente");
             }
+            rs.close();
         } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Error get persona", e);
+            logger.log(Level.SEVERE, "Error obteniendo persona");
         }
         return persona;
     }
@@ -92,17 +96,20 @@ public class PersonaDAOImpl implements PersonaDAO {
      */
     @Override
     public void actualizarPersona(Persona persona) {
-        String query = "UPDATE persona SET nombre = ?, telefono = ?, fechaNacimiento = ?, correo = ?, rol = ? WHERE correo = ?";
+        String query = "UPDATE persona SET nombre=?, telefono=?, fechaNacimiento=?, correo=?, rol=? WHERE correo=?";
         try (Connection conn = connectionDB.getConnection();
                 PreparedStatement pStatement = conn.prepareStatement(query)) {
+            
             pStatement.setString(1, persona.getNombre());
             pStatement.setString(2, persona.getTelefono());
             pStatement.setString(3, persona.getFechaNacimiento());
             pStatement.setString(4, persona.getCorreo());
             pStatement.setInt(5, persona.getRol());
+            pStatement.setString(6, persona.getCorreo());
             pStatement.executeUpdate();
+            logger.log(Level.INFO, "Persona actualizada correctamente");
         } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Error update persona", e);
+            logger.log(Level.SEVERE, "Error actualizando persona", e);
         }
     }
 
@@ -116,8 +123,9 @@ public class PersonaDAOImpl implements PersonaDAO {
                 PreparedStatement pStatement = conn.prepareStatement(query)) {
             pStatement.setString(1, correo);
             pStatement.executeUpdate();
+            logger.log(Level.INFO, "Persona eliminada correctamente");
         } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Error delete persona", e);
+            logger.log(Level.SEVERE, "Error eliminando persona");
         }
     }
 }
